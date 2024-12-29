@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Analysis</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="font-bold text-xl">MSE Analysis</a>
+                    <div class="ml-10 flex space-x-4">
+                        <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">Home</a>
+                        <a href="/analysis" class="px-3 py-2 bg-blue-700 rounded">Analysis</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Technical Analysis: {{ company }}</h1>
+
+         <!-- Chart Container -->
+        <div id="chart" class="w-full h-[600px] bg-white rounded-lg shadow mb-8"></div>
+
+        {% if analysis and analysis.daily %}
+        <!-- Technical Indicators -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Moving Averages -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Moving Averages</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-gray-600">SMA (20 days)</p>
+                        <p class="text-2xl font-bold">{{ "%.2f"|format(analysis.daily.sma20) if analysis.daily.sma20 else 'N/A' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600">EMA (20 days)</p>
+                        <p class="text-2xl font-bold">{{ "%.2f"|format(analysis.daily.ema20) if analysis.daily.ema20 else 'N/A' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RSI -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">RSI (14 days)</h3>
+                {% if analysis.daily.rsi %}
+                <div class="text-2xl font-bold">{{ "%.2f"|format(analysis.daily.rsi) }}</div>
+                <div class="mt-2">
+                    {% if analysis.daily.rsi < 30 %}
+                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded">Signal: Buy (Oversold)</span>
+                    {% elif analysis.daily.rsi > 70 %}
+                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded">Signal: Sell (Overbought)</span>
+                    {% else %}
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded">Signal: Hold (Neutral)</span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-gray-500">Insufficient data for RSI calculation</div>
+                {% endif %}
+            </div>
+
+            <!-- MACD -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">MACD</h3>
+                {% if analysis.daily.macd %}
+                <div class="text-2xl font-bold">{{ "%.2f"|format(analysis.daily.macd) }}</div>
+                {% else %}
+                <div class="text-gray-500">Insufficient data</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const data = {{ history|tojson|safe }};
+
+            const dates = data.map(item => item.Date);
+            const prices = data.map(item => item.Last_Price);
+            const volumes = data.map(item => item.Volume);
+            const highs = data.map(item => item.High);
+            const lows = data.map(item => item.Low);
+
+            const trace1 = {
+                x: dates,
+                y: prices,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Price',
+                line: {
+                    color: '#2563eb',
+                    width: 2
+                }
+            };
+
+            const trace2 = {
+                x: dates,
+                y: volumes,
+                type: 'bar',
+                name: 'Volume',
+                yaxis: 'y2',
+                marker: {
+                    color: volumes.map(vol => vol > 0 ? 'rgba(0, 150, 136, 0.3)' : 'rgba(255, 82, 82, 0.3)')
+                }
+            };
+
+            {% if analysis and analysis.daily and analysis.daily.sma20 %}
+            const sma20 = {
+                x: dates,
+                y: Array(dates.length).fill({{ analysis.daily.sma20 }}),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'SMA 20',
+                line: {
+                    color: '#ff9800',
+                    width: 1,
+                    dash: 'dot'
+                }
+            };
+            {% endif %}
+
+            const layout = {
+                dragmode: 'zoom',
+                showlegend: true,
+                height: 600,
+                plot_bgcolor: 'white',
+                paper_bgcolor: 'white',
+                margin: {
+                    r: 10,
+                    t: 25,
+                    b: 40,
+                    l: 60
+                },
+                xaxis: {
+                    title: 'Date',
+                    rangeslider: { visible: false },
+                    type: 'date'
+                },
+                yaxis: {
+                    title: 'Price',
+                    autorange: true,
+                    domain: [0.3, 1]
+                },
+                yaxis2: {
+                    title: 'Volume',
+                    autorange: true,
+                    domain: [0, 0.2]
+                },
+                grid: {
+                    rows: 2,
+                    columns: 1,
+                    pattern: 'independent'
+                }
+            };
+
+            const config = {
+                responsive: true,
+                scrollZoom: true,
+                modeBarButtonsToAdd: ['drawline', 'drawopenpath', 'drawclosedpath', 'drawcircle', 'drawrect', 'eraseshape'],
+                modeBarButtonsToRemove: ['lasso2d']
+            };
+
+            const traces = [trace1, trace2];
+            {% if analysis and analysis.daily and analysis.daily.sma20 %}
+            traces.push(sma20);
+            {% endif %}
+
+            Plotly.newPlot('chart', traces, layout, config);
+        });
+    </script>
+</body>
+</html>

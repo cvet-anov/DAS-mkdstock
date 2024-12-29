@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>МСЕ Анализа | Добредојдовте</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="font-bold text-xl">МСЕ Анализа</a>
+                    <div class="ml-10 flex space-x-4">
+                        <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">Почетна</a>
+                        <a href="/companies" class="px-3 py-2 hover:bg-blue-700 rounded">Компании</a>
+                        <a href="/analysis" class="px-3 py-2 hover:bg-blue-700 rounded">Анализа</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="bg-blue-600 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4">
+            <h1 class="text-4xl font-bold mb-4">Добредојдовте на МСЕ Анализа</h1>
+            <p class="text-xl mb-8">Следете ги најновите податоци од Македонската Берза во реално време</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-gray-800">
+                <div class="bg-white rounded-lg p-6 shadow-lg">
+                    <h3 class="text-lg font-semibold mb-2">Вкупно Компании</h3>
+                    <p class="text-3xl font-bold text-blue-600">{{ companies|length }}</p>
+                </div>
+                <div class="bg-white rounded-lg p-6 shadow-lg">
+                    <h3 class="text-lg font-semibold mb-2">Последно Ажурирање</h3>
+                    <p class="text-3xl font-bold text-blue-600">{{ companies[0].date }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-12">
+        <h2 class="text-2xl font-bold mb-6">Топ Компании</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for company in companies %}
+            <a href="{{ url_for('company_detail', company=company.name) }}"
+               class="block bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-200">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">{{ company.name }}</h3>
+                        <span class="text-sm text-gray-500">{{ company.date }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-2xl font-bold">{{ "%.2f"|format(company.last_price) }} ден.</span>
+                        <span class="px-3 py-1 rounded-full text-sm font-semibold
+                            {% if company.change > 0 %}
+                            bg-green-100 text-green-800
+                            {% else %}
+                            bg-red-100 text-red-800
+                            {% endif %}">
+                            {{ "%.2f"|format(company.change) }}%
+                        </span>
+                    </div>
+                    <div class="text-gray-600">
+                        <p>Волумен: {{ company.volume|int|format_number }}</p>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
