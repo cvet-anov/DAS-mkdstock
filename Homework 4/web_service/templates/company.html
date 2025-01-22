@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ company }} | МСЕ Анализа</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="font-bold text-xl">МСЕ Анализа</a>
+                    <div class="ml-10 flex space-x-4">
+                        <a href="/" class="px-3 py-2 hover:bg-blue-700 rounded">Почетна</a>
+                        <a href="/companies" class="px-3 py-2 hover:bg-blue-700 rounded">Компании</a>
+                        <a href="/analysis" class="px-3 py-2 hover:bg-blue-700 rounded">Анализа</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if latest %}
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">{{ company }}</h1>
+                    <p class="text-gray-600">Последно ажурирање: {{ latest.Date }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-3xl font-bold mb-2">{{ "%.2f"|format(latest.Last_Price) }} ден.</p>
+                    <span class="px-4 py-2 rounded-full text-sm font-semibold
+                        {% if latest.Change_Pct > 0 %}
+                        bg-green-100 text-green-800
+                        {% else %}
+                        bg-red-100 text-red-800
+                        {% endif %}">
+                        {{ "%.2f"|format(latest.Change_Pct) }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg p-6 shadow">
+                <h3 class="text-lg font-semibold text-gray-600 mb-2">Дневен Волумен</h3>
+                <p class="text-2xl font-bold">{{ latest.Volume|int|format_number }}</p>
+            </div>
+            {% if latest.High %}
+            <div class="bg-white rounded-lg p-6 shadow">
+                <h3 class="text-lg font-semibold text-gray-600 mb-2">Највисока Цена</h3>
+                <p class="text-2xl font-bold">{{ "%.2f"|format(latest.High) }} ден.</p>
+            </div>
+            {% endif %}
+            {% if latest.Low %}
+            <div class="bg-white rounded-lg p-6 shadow">
+                <h3 class="text-lg font-semibold text-gray-600 mb-2">Најниска Цена</h3>
+                <p class="text-2xl font-bold">{{ "%.2f"|format(latest.Low) }} ден.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <a href="{{ url_for('analysis', company=company) }}"
+   class="px-4 py-2 bg-blue-600 text-white rounded">
+   Техничка Анализа
+        </a>
+
+    {% if history %}
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <h2 class="text-2xl font-bold mb-6">Историја на Цени</h2>
+        <div class="bg-white rounded-lg shadow overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Датум</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Цена</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Промена</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Волумен</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for record in history %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.Date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ "%.2f"|format(record.Last_Price) }} ден.
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                {% if record.Change_Pct > 0 %}
+                                bg-green-100 text-green-800
+                                {% else %}
+                                bg-red-100 text-red-800
+                                {% endif %}">
+                                {{ "%.2f"|format(record.Change_Pct) }}%
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ record.Volume|int|format_number }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="bg-red-50 border-l-4 border-red-400 p-4">
+            <div class="flex">
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">
+                        Нема достапни податоци за оваа компанија.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</body>
+</html>
